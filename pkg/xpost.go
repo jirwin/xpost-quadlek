@@ -16,15 +16,22 @@ func xpostReaction(ctx context.Context, reactionChannel <-chan *quadlek.Reaction
 		case rh := <-reactionChannel:
 			if strings.HasPrefix(rh.Reaction.Reaction, XpostPrefix) {
 				dstChan := strings.TrimPrefix(rh.Reaction.Reaction, XpostPrefix)
-				if dstChan == rh.Reaction.Item.Channel {
-					continue
-				}
 				dstChanId, err := rh.Bot.GetChannelId(dstChan)
 				if err != nil {
 					fmt.Println("error getting channel id", err.Error())
 					continue
 				}
-				rh.Bot.Say(dstChanId, "xpost inc!")
+
+				if dstChanId == rh.Reaction.Item.Channel {
+					continue
+				}
+
+				msg, err := rh.Bot.GetMessage(rh.Reaction.Item.Channel, rh.Reaction.Item.Timestamp)
+				if err != nil {
+					fmt.Println("error getting message:", err.Error())
+					continue
+				}
+				rh.Bot.Say(dstChanId, msg.Text)
 			}
 
 		case <-ctx.Done():
